@@ -21,7 +21,7 @@ FASTLED_USING_NAMESPACE
 #define NUM_LEDS    60
 #define NUM_CLUSTER 6
 
-byte[] lights = new byte[360] {       		  0,   0,   0,   0,   0,   1,   1,   2,
+byte lights [360] =  {             0,   0,   0,   0,   0,   1,   1,   2,
                                               2,   3,   4,   5,   6,   7,   8,   9,
                                              11,  12,  13,  15,  17,  18,  20,  22,
                                              24,  26,  28,  30,  32,  35,  37,  39,
@@ -67,12 +67,12 @@ byte[] lights = new byte[360] {       		  0,   0,   0,   0,   0,   1,   1,   2,
                                               0,   0,   0,   0,   0,   0,   0,   0,
                                               0,   0,   0,   0,   0,   0,   0,   0};
 
-        byte[] HSVlights = new byte[61] {     0,   4,   8,  13,  17,  21,  25,  30,  34,  38,  42,  47,  51,  55,  59,  64,
+        byte HSVlights[61] = {     0,   4,   8,  13,  17,  21,  25,  30,  34,  38,  42,  47,  51,  55,  59,  64,
                                              68,  72,  76,  81,  85,  89,  93,  98, 102, 106, 110, 115, 119, 123, 127, 132,
                                             136, 140, 144, 149, 153, 157, 161, 166, 170, 174, 178, 183, 187, 191, 195, 200,
                                             204, 208, 212, 217, 221, 225, 229, 234, 238, 242, 246, 251, 255 };
 
-        byte[] HSVpower = new byte[121] {     0,   2,   4,   6,   8,  11,  13,  15,  17,  19,  21,  23,  25,  28,  30,
+        byte HSVpower[121] =  {     0,   2,   4,   6,   8,  11,  13,  15,  17,  19,  21,  23,  25,  28,  30,
                                              32,  34,  36,  38,  40,  42,  45,  47,  49,  51,  53,  55,  57,  59,  62,
                                              64,  66,  68,  70,  72,  74,  76,  79,  81,  83,  85,  87,  89,  91,  93,
                                              96,  98, 100, 102, 104, 106, 108, 110, 113, 115, 117, 119, 121, 123, 125,
@@ -82,13 +82,14 @@ byte[] lights = new byte[360] {       		  0,   0,   0,   0,   0,   1,   1,   2,
                                             223, 225, 227, 229, 232, 234, 236, 238, 240, 242, 244, 246, 249, 251, 253,
                                             255 };
 
-        byte[] Breath = new byte[101] {  255, 252, 249, 247, 244, 242, 239, 237, 234, 232, 229, 226, 224, 221, 219, 216,
+        byte Breath[101] =  {  255, 252, 249, 247, 244, 242, 239, 237, 234, 232, 229, 226, 224, 221, 219, 216,
                                          214, 211, 209, 206, 204, 201, 198, 196, 193, 191, 188, 186, 183, 181, 178, 175,
                                          173, 170, 168, 165, 163, 160, 158, 155, 153, 150, 147, 145, 142, 140, 137, 135,
                                          132, 130, 127, 124, 122, 119, 117, 114, 112, 109, 107, 104, 102,  99,  96,  94,
                                           91,  89,  86,  84,  81,  79,  76,  73,  71,  68,  66,  63,  61,  58,  56,  53,
                                           51,  48,  45,  43,  40,  38,  35,  33,  30,  28,  25,  22,  20,  17,  15,  12,
                                           10,   7,   5,   2,   0 };
+                                          
 
 CRGB leds[NUM_LEDS];
 int snake_control = 3;
@@ -155,7 +156,7 @@ void espectre(){
 }
 
 void RealHSVRainbow_analog(){
-	if (angle < 60)
+  if (angle < 60)
             {
                 redValue = 255;
                 greenValue = HSVlights[angle];
@@ -191,15 +192,15 @@ void RealHSVRainbow_analog(){
                 greenValue = 0;
                 blueValue = HSVlights[360 - angle];
             }
-			
-			for (int i = 0; i < NUM_LEDS; i++){
-				leds[i] = CRGB(redValue, greenValue, blueValue);
-			}
-			
-			angle = (angle + 1) % 360;
+      
+      for (int i = 0; i < NUM_LEDS; i++){
+        leds[i] = CRGB(redValue, greenValue, blueValue);
+      }
+      
+      angle = (angle + 1) % 360;
 }
 
-public void PowerHSVRainbow_analog()
+void PowerHSVRainbow_analog()
         {
             if (angle < 120)
             {
@@ -220,23 +221,23 @@ public void PowerHSVRainbow_analog()
                 blueValue = HSVpower[360 - angle];
             }
 
-			for (int i = 0; i < NUM_LEDS; i++){
-				leds[i] = CRGB(redValue, greenValue, blueValue);
-			}
-			angle = (angle + 1) % 360;
+      for (int i = 0; i < NUM_LEDS; i++){
+        leds[i] = CRGB(redValue, greenValue, blueValue);
+      }
+      angle = (angle + 1) % 360;
         }
 
-        public void SineWaveRainbow_analog()
+ void SineWaveRainbow_analog()
         {
             redValue = lights[(angle + 120) % 360];
             greenValue = lights[angle];
             blueValue = lights[(angle + 240) % 360];
 
-			for (int i = 0; i < NUM_LEDS; i++){
-				leds[i] = CRGB(redValue, greenValue, blueValue);
-			}
+      for (int i = 0; i < NUM_LEDS; i++){
+        leds[i] = CRGB(redValue, greenValue, blueValue);
+      }
 
-			angle = (angle + 1) % 360;			
+      angle = (angle + 1) % 360;      
         }
 
 void individual(int tim){
