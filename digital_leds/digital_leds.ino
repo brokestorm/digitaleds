@@ -21,6 +21,22 @@ FASTLED_USING_NAMESPACE
 #define NUM_LEDS    60
 #define NUM_CLUSTER 6
 
+// Protoboard
+
+int led1 = 11;           // the PWM pin the LED is attached to
+int led2 = 6;
+int led3 = 13;
+int brightness = 0;    // how bright the LED is
+int brightness2 = 0;
+int fadeAmount = 5;    // how many points to fade the LED by
+int valPot = 0;
+int potPin = 0; // analog input
+int ctsPin = 2;
+int soundSensor = 1; // analog input
+int auxPos = 1;
+
+// Digital Leds
+
 CRGB leds[NUM_LEDS];
 int snake_control = 3;
 int aux_control = 1;
@@ -36,9 +52,20 @@ int green = 0;
 int blue = 0;
 int interval = 1;
 int aux_interval = 10;
-
-#define BRIGHTNESS          200
+bool pattern_status = false;
+bool mode1 = false;
+bool mode2 = false;
+bool mode3 = false;
+bool mode4 = false;
+#define BRIGHTNESS          255
 #define FRAMES_PER_SECOND  60
+
+void rainbow();
+void Custom();
+void lollypop();
+void snake();
+void individual();
+void nextPattern();
 
 void setup() {
   for(int k = 0; k < NUM_LEDS; k++){
@@ -56,10 +83,74 @@ void setup() {
 
   // set master brightness control
   FastLED.setBrightness(BRIGHTNESS);
+
+  Serial.begin(9600);
+  pinMode(led1, OUTPUT);
+  pinMode(led2, OUTPUT);
+  pinMode(led3, OUTPUT);
+  pinMode(ctsPin, INPUT);
+  pinMode(soundSensor, INPUT);
 }
-  
+
+typedef void (*SimplePatternList[])();
+SimplePatternList gPatterns = { rainbow, snake, individual, lollypop, Custom };
+
+uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
+
 void loop()
 { 
+  gPatterns[gCurrentPatternNumber]();
+  
+  analogWrite(led2, brightness); // Aciona o LED proporcionalmente ao valor da leitura analógica
+  
+  int soundData = analogRead(soundSensor);
+  soundData = map(soundData, 0, 1023, 0, 255);
+  if(soundData >= 160 && soundData <= 255){
+    analogWrite(led1, soundData);
+  } else{
+    analogWrite(led1, LOW);  
+  }
+  // set the brightness of pin 9:
+  //analogWrite(led1, brightness);
+
+
+  
+  // WORKING PROPERLY ------------------
+  int ctsValue = digitalRead(ctsPin);
+  if (ctsValue == HIGH){
+    digitalWrite(led3, HIGH);
+    if(pattern_status == false){
+      for(int k = 0; k < NUM_LEDS; k++){
+        cores[k] = CRGB (255 - k, k, 0);
+      }
+      aux_cor = 1;
+      cor_controle = 0;
+      red = 255;
+      green = 0;
+      blue = 0;
+      interval = 1;
+      aux_interval = 10;
+      snake_control = 3;
+      aux_control = 1;
+      mode1 = false;
+      mode2 = false;
+      mode3 = false;
+      mode4 = false;
+      nextPattern();
+      
+    }
+      pattern_status = true;
+  }
+  else{
+    pattern_status = false;
+    digitalWrite(led3, LOW);
+  }
+  // ------------------------------------ 
+
+  
+  valPot =  analogRead(potPin); //Faz a leitura analógica do pino em que o potenciômetro esta ligado 
+  brightness  = map(valPot, 0, 1023, 0, 255);
+  
   // send the 'leds' array out to the actual LED strip
     
   // insert a delay to keep the framerate modest
@@ -70,25 +161,21 @@ void loop()
   //rainbow(false);
   //lollypop(false);
   //Custom(5, false);
-  individual(60);
-}
+  //individual();
 
-void espectre(){
-  for(int i = 0; i < NUM_LEDS; i++){
-    changingLedsByCluster();
-  }
-}
-
-void individual(int tim){
-  for(int i = 0; i < NUM_LEDS; i++){
-    changingLedsIndividually(i);
-  } 
-  delay(tim);
-  FastLED.show();
   
+
 }
 
-void changingLedsByCluster(){
+#define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
+
+void nextPattern()
+{
+  // add one to the current pattern number, and wrap around at the end
+  gCurrentPatternNumber = (gCurrentPatternNumber + 1) % ARRAY_SIZE( gPatterns);
+}
+
+void changingLedsByCluster(int ind_led){
   int x = 1;
   switch (cor_controle%3){
     case 0: red = red - x;
@@ -125,9 +212,9 @@ void changingLedsByCluster(){
   cores[ind_led] = CRGB(red, green, blue);
   leds[ind_led] = cores[ind_led];
 }
-;
 
-void snake(bool mode){
+
+void snake(){
   snake_control = aux_control + snake_control;
   if(snake_control >= 59 or snake_control <= 0)
   {
@@ -169,14 +256,14 @@ void snake(bool mode){
   leds[snake_control] = cor_atual;
   FastLED.show();
   delay(30);
-  if(mode == true){
+  if(mode1 == true){
     leds[snake_control] = CRGB(0,0,0);
   }
   
   
 }
 
-void rainbow(bool mode){
+void rainbow(){
   snake_control = aux_control + snake_control;
   if(snake_control >= 58 or snake_control <= 2)
   {
@@ -224,7 +311,8 @@ void rainbow(bool mode){
 
   FastLED.show();
   delay(30);
-  if (mode == true){
+  
+  if (mode2 == true){
     leds[snake_control-2*aux_cor] = CRGB(0,0,0);
   }
 }
@@ -267,7 +355,7 @@ void changingLedsIndividually(int ind_led){
   leds[ind_led] = cores[ind_led];
 }
 
-void lollypop( bool mode){
+void lollypop(){
 
   snake_control = aux_control + snake_control;
   if(snake_control >= 58 or snake_control <= 2)
@@ -320,12 +408,12 @@ void lollypop( bool mode){
   FastLED.show();
   delay(30);
   
-  if(mode == true){
+  if(mode3 == true){
     leds[snake_control-2*aux_cor] = CRGB(0,0,0);
   }
 }
 
-void Custom(int interval, bool mode){
+void Custom(){
   if(interval > 255){interval = 255;}
   else if(interval < 1){interval = 1;}  
   
@@ -377,7 +465,17 @@ void Custom(int interval, bool mode){
   FastLED.show();
   delay(30);
   
-  if (mode == true){
+  if (mode4 == true){
     leds[snake_control-2*aux_cor] = CRGB(0,0,0);
   }
 }
+
+void individual(){
+  for(int i = 0; i < NUM_LEDS; i++){
+    changingLedsIndividually(i  );
+  }
+  delay(80);
+  FastLED.show();
+}
+
+
