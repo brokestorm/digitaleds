@@ -1,3 +1,5 @@
+
+
 #include "FastLED.h"
 
 FASTLED_USING_NAMESPACE
@@ -19,25 +21,29 @@ FASTLED_USING_NAMESPACE
 #define LED_TYPE    WS2811
 #define COLOR_ORDER RGB
 #define NUM_LEDS    60
-#define NUM_CLUSTER 6
+
+
+
+#define MINIMUN_SOUND 70
+#define POT_PIN 0
+#define TOUCH_PIN 2
+#define SOUND_DIGITAL 4
+#define SOUND_ANALOG 1
+#define LED_PIN_1 11
+#define LED_PIN_2 10
+#define LED_PIN_3 13
+
+#define BRIGHTNESS  255
+#define FRAMES_PER_SECOND  60
 // Protoboard
 
-byte led1 = 11;           // the PWM pin the LED is attached to
-byte led2 = 6;
-byte led3 = 13;
-
 int brightness = 0;    // how bright the LED is
-byte brightness2 = 0;
-
 byte fadeAmount = 5;    // how many points to fade the LED by
+bool soundDigital = false;
+int soundAnalog = 0;
 int valPot = 0;
-byte potPin = 0; // analog input
-byte ctsPin = 2;
-int soundSensor = 1; // analog input
-byte auxPos = 1;
 
-// Digital Leds
-
+// Digital Leds ----------------------------------------------------------------
 byte lights [] =  {             0,   0,   0,   0,   0,   1,   1,   2,
                                               2,   3,   4,   5,   6,   7,   8,   9,
                                              11,  12,  13,  15,  17,  18,  20,  22,
@@ -111,9 +117,6 @@ byte lights [] =  {             0,   0,   0,   0,   0,   1,   1,   2,
 CRGB leds[NUM_LEDS];
 int snake_control = 3;
 int aux_control = 1;
-int clusters[NUM_CLUSTER];
-
-CRGB color_cluster[NUM_CLUSTER];
 CRGB cores[NUM_LEDS];
 CRGB cor_atual;
 int aux_cor = 1;
@@ -130,10 +133,6 @@ bool mode1 = false;
 bool mode2 = false;
 bool mode3 = false;
 bool mode4 = false;
-#define BRIGHTNESS          255
-#define FRAMES_PER_SECOND  60
-
-
 void rainbow();
 void Custom();
 void lollypop();
@@ -156,9 +155,6 @@ void setup() {
   for(int k = 0; k < NUM_LEDS; k++){
     cores[k] = CRGB (255 - k, k, 0);
   }
-  for(int k = 0; k < NUM_CLUSTER; k++){
-    clusters[k] = NUM_LEDS/NUM_CLUSTER * k;
-  }
   
   //delay(3000); // 3 second delay for recovery
   
@@ -170,11 +166,12 @@ void setup() {
   FastLED.setBrightness(BRIGHTNESS);
 
   Serial.begin(9600);
-  pinMode(led1, OUTPUT);
-  pinMode(led2, OUTPUT);
-  pinMode(led3, OUTPUT);
-  pinMode(ctsPin, INPUT);
-  pinMode(soundSensor, INPUT);
+  pinMode(LED_PIN_1, OUTPUT);
+  pinMode(LED_PIN_2, OUTPUT);
+  pinMode(LED_PIN_3, OUTPUT);
+  pinMode(TOUCH_PIN, INPUT);
+  pinMode(SOUND_ANALOG, INPUT);
+  pinMode(SOUND_DIGITAL, INPUT);
 }
 
 typedef void (*SimplePatternList[])();
@@ -184,28 +181,22 @@ uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
 
 void loop()
 { 
-  gPatterns[gCurrentPatternNumber]();
+  gPatterns[gCurrentPatternNumber]();  
+
+  //----------------------------------------------------------------SOUND DATA ----------------------------------------------------------//
   
-  analogWrite(led2, brightness); // Aciona o LED proporcionalmente ao valor da leitura analógica
   
-  int soundData = analogRead(soundSensor);
-  soundData = map(soundData, 0, 1023, 0, 255);
-  if(soundData >= 160 && soundData <= 255){
-    analogWrite(led1, soundData);
-   // FastLED.setBrightness(soundData);
+  soundDigital = digitalRead(SOUND_DIGITAL);
+  if(soundDigital = true){
+    analogWrite(LED_PIN_1, BRIGHTNESS);
   } else{
-    analogWrite(led1, LOW); 
-   // FastLED.setBrightness(LOW); 
+    analogWrite(LED_PIN_1, LOW); 
   }
-  // set the brightness of pin 9:
-  //analogWrite(led1, brightness);
-
-
   
-  // WORKING PROPERLY ------------------
-  int ctsValue = digitalRead(ctsPin);
+  // ---------------------------------------------------------------TOUCH DATA ------------------------------------------------------------//
+  int ctsValue = digitalRead(TOUCH_PIN);
   if (ctsValue == HIGH){
-    digitalWrite(led3, HIGH);
+    digitalWrite(LED_PIN_3, HIGH);
     if(pattern_status == false){
       
       for(int k = 0; k < NUM_LEDS; k++){
@@ -228,9 +219,7 @@ void loop()
       redValue = 0;
       greenValue = 0;
       blueValue = 0;
-      angle = 0;
-    //  FastLED.setBrightness(soundData);
-      
+      angle = 0;      
       nextPattern();
       
     }
@@ -238,14 +227,23 @@ void loop()
   }
   else{
     pattern_status = false;
-    digitalWrite(led3, LOW);
+    digitalWrite(LED_PIN_3, LOW);
   }
   // ------------------------------------ 
 
   
-  valPot =  analogRead(potPin); //Faz a leitura analógica do pino em que o potenciômetro esta ligado 
-  brightness  = map(valPot, 0, 1023, 0, 255);
+  valPot =  analogRead(POT_PIN); //Faz a leitura analógica do pino em que o potenciômetro esta ligado
+  if(valPot > 0 && valPot <= 1023)
+    brightness  = map(valPot, 0, 1023, 0, 255);
+    
+  if(brightness > 0 && brightness <= 255){
   FastLED.setBrightness(brightness);
+  analogWrite(LED_PIN_2, brightness); // Aciona o LED proporcionalmente ao valor da leitura analógica
+  }
+  else{
+    analogWrite(LED_PIN_2, LOW); // Aciona o LED proporcionalmente ao valor da leitura analógica
+    FastLED.setBrightness(LOW);
+  }
   
   // send the 'leds' array out to the actual LED strip
     
